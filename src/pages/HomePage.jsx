@@ -31,7 +31,7 @@ function HomePage({ language, openComingSoon }) {
     loadInitialData()
   }, [])
   
-  // Apply filters whenever filters change (instant filtering)
+  // Apply filters whenever filters change
   useEffect(() => {
     applyFilters()
   }, [filters, locations])
@@ -58,24 +58,20 @@ function HomePage({ language, openComingSoon }) {
   const applyFilters = () => {
     let result = [...locations]
     
-    // Filter by bank
     if (filters.bankIds.length > 0) {
       result = result.filter(loc => filters.bankIds.includes(loc.bank_id))
     }
     
-    // Filter by type
     if (filters.type === 'branch') {
       result = result.filter(loc => loc.type === 'branch' || loc.type === 'both')
     } else if (filters.type === 'atm') {
       result = result.filter(loc => loc.type === 'atm' || loc.type === 'both')
     }
     
-    // Filter by city
     if (filters.cityId) {
       result = result.filter(loc => loc.city_id === filters.cityId)
     }
     
-    // Filter by services
     if (filters.is24Hours) {
       result = result.filter(loc => loc.is_24_hours === true)
     }
@@ -99,7 +95,6 @@ function HomePage({ language, openComingSoon }) {
     setFilters(newFilters)
   }
   
-  // Handle Near Me button click
   const handleNearMe = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -107,7 +102,6 @@ function HomePage({ language, openComingSoon }) {
           const { latitude, longitude } = position.coords
           setUserLocation([latitude, longitude])
           
-          // If mapRef exists, fly to user location
           if (mapRef.current) {
             mapRef.current.flyTo([latitude, longitude], 14, { duration: 1.5 })
           }
@@ -129,16 +123,13 @@ function HomePage({ language, openComingSoon }) {
     }
   }
   
-  // Handle row click in table
   const handleTableRowClick = (location) => {
     setSelectedLocation(location)
     
-    // Scroll to map and center on location
     if (mapRef.current && location.latitude && location.longitude) {
       mapRef.current.flyTo([location.latitude, location.longitude], 15, { duration: 1 })
     }
     
-    // Scroll to top to see map
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   
@@ -175,8 +166,8 @@ function HomePage({ language, openComingSoon }) {
         {loading ? text.loading : `${filteredLocations.length} ${text.locationsCount}`}
       </div>
       
-      {/* Map Section */}
-      <div className="h-[50vh] relative">
+      {/* Map Section - Larger */}
+      <div className="h-[65vh] relative">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
             <div className="flex flex-col items-center">
@@ -200,47 +191,35 @@ function HomePage({ language, openComingSoon }) {
           selectedLocation={selectedLocation}
           setSelectedLocation={setSelectedLocation}
           userLocation={userLocation}
-        />
+        >
+          {/* LocationCard inside MapView for fullscreen support */}
+          {selectedLocation && (
+            <div className="absolute top-4 right-4 w-80 z-[1000] max-h-[calc(100%-2rem)] overflow-y-auto">
+              <LocationCard
+                location={selectedLocation}
+                bank={banks.find(b => b.id === selectedLocation.bank_id)}
+                city={cities.find(c => c.id === selectedLocation.city_id)}
+                language={language}
+                onClose={() => setSelectedLocation(null)}
+              />
+            </div>
+          )}
+        </MapView>
       </div>
       
-      {/* Results Table Section */}
-      <div className="flex-1 bg-white">
-        <ResultsTable
-          language={language}
-          locations={filteredLocations}
-          banks={banks}
-          cities={cities}
-          onRowClick={handleTableRowClick}
-          selectedLocationId={selectedLocation?.id}
-        />
+      {/* Results Table Section - Smaller */}
+      <div className="bg-white border-t">
+        <div className="max-h-[35vh] overflow-y-auto">
+          <ResultsTable
+            language={language}
+            locations={filteredLocations}
+            banks={banks}
+            cities={cities}
+            onRowClick={handleTableRowClick}
+            selectedLocationId={selectedLocation?.id}
+          />
+        </div>
       </div>
-      
-      {/* Selected Location Card - Floating Panel */}
-      {selectedLocation && (
-        <>
-          {/* Desktop - Side Panel */}
-          <div className="hidden md:block fixed top-36 right-4 w-80 z-40 max-h-[calc(100vh-160px)] overflow-y-auto">
-            <LocationCard
-              location={selectedLocation}
-              bank={banks.find(b => b.id === selectedLocation.bank_id)}
-              city={cities.find(c => c.id === selectedLocation.city_id)}
-              language={language}
-              onClose={() => setSelectedLocation(null)}
-            />
-          </div>
-          
-          {/* Mobile - Bottom Sheet */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-4 max-h-[60vh] overflow-y-auto bg-white rounded-t-2xl shadow-2xl">
-            <LocationCard
-              location={selectedLocation}
-              bank={banks.find(b => b.id === selectedLocation.bank_id)}
-              city={cities.find(c => c.id === selectedLocation.city_id)}
-              language={language}
-              onClose={() => setSelectedLocation(null)}
-            />
-          </div>
-        </>
-      )}
     </div>
   )
 }

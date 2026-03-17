@@ -1,110 +1,138 @@
-import React from 'react'
-import { X, Navigation, Phone, Clock, ExternalLink, Flag, Building2, Banknote } from 'lucide-react'
+import React, { useState } from 'react'
+import { X, Navigation, Phone, Clock, MapPin, Share2, AlertTriangle, Send, CheckCircle } from 'lucide-react'
+
+// WhatsApp icon component
+const WhatsAppIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+)
 
 function LocationCard({ location, language, onClose }) {
-  if (!location) return null
+  const [showReportForm, setShowReportForm] = useState(false)
+  const [reportText, setReportText] = useState('')
+  const [reportSubmitted, setReportSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   
   const t = {
     ar: {
-      open: 'مفتوح الآن',
+      directions: 'الاتجاهات',
+      call: 'اتصال',
+      share: 'مشاركة',
+      reportIssue: 'إبلاغ عن مشكلة',
+      open24: 'مفتوح 24 ساعة',
       closed: 'مغلق',
-      open24: 'يعمل 24 ساعة',
+      openNow: 'مفتوح الآن',
       hours: 'ساعات العمل',
-      address: 'العنوان',
-      phone: 'الهاتف',
-      directions: 'احصل على الاتجاهات',
-      call: 'اتصل',
-      openAccount: 'افتح حساب',
-      reportUpdate: 'أبلغ عن تحديث',
-      branch: 'فرع',
-      atm: 'صراف آلي',
-      remittance: 'مركز تحويل',
-      islamic: 'إسلامي',
-      lastUpdated: 'آخر تحديث'
+      services: 'الخدمات',
+      wheelchair: 'كرسي متحرك',
+      womenSection: 'قسم نسائي',
+      driveThru: 'خدمة السيارات',
+      foreignExchange: 'صرف عملات',
+      reportPlaceholder: 'اكتب المشكلة هنا...',
+      submit: 'إرسال',
+      cancel: 'إلغاء',
+      thankYou: 'شكراً لك! تم استلام البلاغ.',
+      shareText: 'شاهد هذا الموقع'
     },
     en: {
-      open: 'Open Now',
-      closed: 'Closed',
-      open24: 'Open 24 Hours',
-      hours: 'Working Hours',
-      address: 'Address',
-      phone: 'Phone',
-      directions: 'Get Directions',
+      directions: 'Directions',
       call: 'Call',
-      openAccount: 'Open Account',
-      reportUpdate: 'Report Update',
-      branch: 'Branch',
-      atm: 'ATM',
-      remittance: 'Remittance Center',
-      islamic: 'Islamic',
-      lastUpdated: 'Last updated'
+      share: 'Share',
+      reportIssue: 'Report Issue',
+      open24: 'Open 24 Hours',
+      closed: 'Closed',
+      openNow: 'Open Now',
+      hours: 'Working Hours',
+      services: 'Services',
+      wheelchair: 'Wheelchair',
+      womenSection: 'Women Section',
+      driveThru: 'Drive-thru',
+      foreignExchange: 'Foreign Exchange',
+      reportPlaceholder: 'Describe the issue...',
+      submit: 'Submit',
+      cancel: 'Cancel',
+      thankYou: 'Thank you! Report received.',
+      shareText: 'Check out this location'
     }
   }
   
   const text = t[language]
   
-  // Check if branch is currently open
-  const isOpen = () => {
-    if (location.is_24_hours) return true
-    
-    const now = new Date()
-    const day = now.getDay()
-    
-    if (day === 5 || day === 6) return false
-    
-    const currentTime = now.getHours() * 100 + now.getMinutes()
-    const openTime = 930
-    const closeTime = 1630
-    
-    return currentTime >= openTime && currentTime <= closeTime
+  // Get display values
+  const name = language === 'ar' ? location.name_ar : location.name_en
+  const address = language === 'ar' ? location.address_ar : location.address_en
+  const bankName = language === 'ar' ? location.bank?.name_ar : location.bank?.name_en
+  
+  // Google Maps URL with coordinates
+  const googleMapsUrl = `https://maps.google.com/?q=${location.latitude},${location.longitude}`
+  
+  // Open Google Maps for directions
+  const openDirections = () => {
+    window.open(googleMapsUrl, '_blank')
   }
   
-  const getTypeIcon = () => {
-    switch (location.type) {
-      case 'atm': return <Banknote size={18} />
-      case 'remittance_center': return <Building2 size={18} />
-      default: return <Building2 size={18} />
+  // Call phone number
+  const callPhone = () => {
+    if (location.phone) {
+      window.location.href = `tel:${location.phone}`
     }
   }
   
-  const getTypeName = () => {
-    switch (location.type) {
-      case 'atm': return text.atm
-      case 'remittance_center': return text.remittance
-      default: return text.branch
-    }
+  // Share via WhatsApp with Google Maps link
+  const shareWhatsApp = () => {
+    const message = `${text.shareText}: ${bankName} - ${name}
+📍 ${address}
+🗺️ ${googleMapsUrl}`
+    
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank')
   }
   
-  // Build Google Maps URL if not present
-  const getDirectionsUrl = () => {
-    if (location.google_maps_url) return location.google_maps_url
-    if (location.latitude && location.longitude) {
-      return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`
-    }
-    return null
+  // Submit report
+  const submitReport = async () => {
+    if (!reportText.trim()) return
+    
+    setSubmitting(true)
+    
+    // TODO: Send to Supabase or API
+    // For now, just simulate submission
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    console.log('Report submitted:', {
+      locationId: location.id,
+      locationName: name,
+      report: reportText,
+      timestamp: new Date().toISOString()
+    })
+    
+    setSubmitting(false)
+    setReportSubmitted(true)
+    setReportText('')
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowReportForm(false)
+      setReportSubmitted(false)
+    }, 3000)
   }
+  
+  // Services list
+  const services = []
+  if (location.is_24_hours) services.push(text.open24)
+  if (location.wheelchair_accessible) services.push(text.wheelchair)
+  if (location.women_section) services.push(text.womenSection)
+  if (location.drive_thru) services.push(text.driveThru)
+  if (location.foreign_exchange) services.push(text.foreignExchange)
   
   return (
-    <div className="bg-white rounded-xl shadow-xl overflow-hidden animate-slide-up">
-      {/* Header with Bank Color */}
-      <div 
-        className="p-4 text-white"
-        style={{ backgroundColor: location.banks?.brand_color || '#006B3F' }}
-      >
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="bg-saudi-green-500 text-white p-4">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            {/* Bank Logo Placeholder */}
-            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              {getTypeIcon()}
-            </div>
-            <div>
-              <h3 className="font-bold">
-                {language === 'ar' ? location.banks?.name_ar : location.banks?.name_en}
-              </h3>
-              <p className="text-sm opacity-90">
-                {language === 'ar' ? location.name_ar : location.name_en}
-              </p>
-            </div>
+          <div className="flex-1">
+            <p className="text-sm text-green-100 mb-1">{bankName}</p>
+            <h3 className="font-bold text-lg">{name}</h3>
           </div>
           <button
             onClick={onClose}
@@ -113,134 +141,131 @@ function LocationCard({ location, language, onClose }) {
             <X size={20} />
           </button>
         </div>
-        
-        {/* Type & Status Badges */}
-        <div className="flex items-center gap-2 mt-3">
-          <span className="px-2 py-1 bg-white/20 rounded-full text-xs">
-            {getTypeName()}
-          </span>
-          {location.is_islamic && (
-            <span className="px-2 py-1 bg-white/20 rounded-full text-xs">
-              {text.islamic}
-            </span>
-          )}
-          {location.is_24_hours ? (
-            <span className="px-2 py-1 bg-green-500 rounded-full text-xs">
-              {text.open24}
-            </span>
-          ) : isOpen() ? (
-            <span className="px-2 py-1 bg-green-500 rounded-full text-xs">
-              {text.open}
-            </span>
-          ) : (
-            <span className="px-2 py-1 bg-red-500 rounded-full text-xs">
-              {text.closed}
-            </span>
-          )}
-        </div>
       </div>
       
       {/* Content */}
       <div className="p-4 space-y-4">
+        
         {/* Address */}
-        <div className="flex gap-3">
-          <Navigation size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs text-gray-500 mb-1">{text.address}</p>
-            <p className="text-sm text-gray-700">
-              {language === 'ar' ? location.address_ar : location.address_en}
-              {location.cities && (
-                <span className="text-gray-500">
-                  {' - '}{language === 'ar' ? location.cities.name_ar : location.cities.name_en}
-                </span>
-              )}
-            </p>
-          </div>
+        <div className="flex items-start gap-3">
+          <MapPin size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-gray-600">{address}</p>
         </div>
         
         {/* Hours */}
-        {!location.is_24_hours && (
-          <div className="flex gap-3">
+        {location.is_24_hours ? (
+          <div className="flex items-center gap-3">
+            <Clock size={18} className="text-gray-400" />
+            <span className="text-sm text-green-600 font-medium">{text.open24}</span>
+          </div>
+        ) : location.working_hours && (
+          <div className="flex items-start gap-3">
             <Clock size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs text-gray-500 mb-1">{text.hours}</p>
-              <p className="text-sm text-gray-700">
-                {language === 'ar' ? 'الأحد - الخميس: ٩:٣٠ ص - ٤:٣٠ م' : 'Sun - Thu: 9:30 AM - 4:30 PM'}
-              </p>
+            <div className="text-sm text-gray-600">
+              <p className="font-medium text-gray-700 mb-1">{text.hours}</p>
+              <p>{location.working_hours}</p>
             </div>
           </div>
         )}
         
-        {/* Phone */}
-        {location.phone && (
-          <div className="flex gap-3">
-            <Phone size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs text-gray-500 mb-1">{text.phone}</p>
-              <a 
-                href={`tel:${location.phone}`}
-                className="text-sm text-saudi-green-500 hover:underline"
+        {/* Services */}
+        {services.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {services.map((service, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
               >
-                {location.phone}
-              </a>
-            </div>
+                {service}
+              </span>
+            ))}
           </div>
         )}
         
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          {getDirectionsUrl() && (
-            <a
-              href={getDirectionsUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 btn-primary flex items-center justify-center gap-2"
-            >
-              <Navigation size={16} />
-              {text.directions}
-            </a>
-          )}
-          {location.phone && (
-            <a
-              href={`tel:${location.phone}`}
-              className="btn-outline flex items-center justify-center gap-2"
-            >
-              <Phone size={16} />
-              {text.call}
-            </a>
-          )}
-        </div>
-        
-        {/* Secondary Actions */}
-        <div className="flex gap-2">
-          {location.banks?.website_url && (
-            <a
-              href={location.banks.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 text-center py-2 text-sm text-saudi-green-500 hover:bg-saudi-green-50 rounded-lg transition-colors"
-            >
-              <ExternalLink size={14} className="inline mr-1" />
-              {text.openAccount}
-            </a>
-          )}
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          {/* Directions */}
           <button
-            className="flex-1 text-center py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => {
-              // TODO: Implement report form
-              alert(language === 'ar' ? 'شكراً! سيتم مراجعة بلاغك.' : 'Thanks! Your report will be reviewed.')
-            }}
+            onClick={openDirections}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-saudi-green-500 text-white rounded-lg hover:bg-saudi-green-600 transition-colors"
           >
-            <Flag size={14} className="inline mr-1" />
-            {text.reportUpdate}
+            <Navigation size={16} />
+            <span className="text-sm font-medium">{text.directions}</span>
+          </button>
+          
+          {/* Call */}
+          <button
+            onClick={callPhone}
+            disabled={!location.phone}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors ${
+              location.phone
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <Phone size={16} />
+            <span className="text-sm font-medium">{text.call}</span>
+          </button>
+          
+          {/* WhatsApp Share */}
+          <button
+            onClick={shareWhatsApp}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <WhatsAppIcon size={16} />
+            <span className="text-sm font-medium">{text.share}</span>
+          </button>
+          
+          {/* Report Issue */}
+          <button
+            onClick={() => setShowReportForm(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            <AlertTriangle size={16} />
+            <span className="text-sm font-medium">{text.reportIssue}</span>
           </button>
         </div>
         
-        {/* Last Updated */}
-        {location.last_verified && (
-          <p className="text-xs text-gray-400 text-center">
-            {text.lastUpdated}: {new Date(location.last_verified).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-          </p>
+        {/* Report Issue Form */}
+        {showReportForm && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+            {reportSubmitted ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle size={20} />
+                <span className="text-sm font-medium">{text.thankYou}</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={reportText}
+                  onChange={(e) => setReportText(e.target.value)}
+                  placeholder={text.reportPlaceholder}
+                  className="w-full p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-saudi-green-500"
+                  rows={3}
+                  dir={language === 'ar' ? 'rtl' : 'ltr'}
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={submitReport}
+                    disabled={!reportText.trim() || submitting}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-saudi-green-500 text-white rounded-lg hover:bg-saudi-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send size={14} />
+                    <span className="text-sm">{submitting ? '...' : text.submit}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowReportForm(false)
+                      setReportText('')
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    <span className="text-sm">{text.cancel}</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -248,3 +273,26 @@ function LocationCard({ location, language, onClose }) {
 }
 
 export default LocationCard
+```
+
+---
+
+## What This Includes
+
+| Feature | Description |
+|---------|-------------|
+| **Directions** | Opens Google Maps with lat/lng coordinates |
+| **Call** | Opens phone dialer |
+| **WhatsApp Share** | Shares message with Google Maps link (when user clicks link in WhatsApp → opens Google Maps) |
+| **Report Issue** | Text input form with submit button |
+| **Services badges** | Shows 24hr, wheelchair, women, drive-thru, forex |
+
+---
+
+## WhatsApp Message Format
+
+When user taps WhatsApp share, it opens WhatsApp with this message:
+```
+Check out this location: Al Rajhi - King Fahd Branch
+📍 King Fahd Road, Riyadh
+🗺️ https://maps.google.com/?q=24.7136,46.6753

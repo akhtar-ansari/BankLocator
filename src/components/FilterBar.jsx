@@ -63,7 +63,6 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
     { key: 'foreignExchange', label: text.foreignExchange }
   ]
   
-  // Toggle bank selection
   const toggleBank = (bankId) => {
     const newBankIds = filters.bankIds.includes(bankId)
       ? filters.bankIds.filter(id => id !== bankId)
@@ -71,22 +70,18 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
     onFilterChange({ ...filters, bankIds: newBankIds })
   }
   
-  // Clear all bank selections
   const clearBanks = () => {
     onFilterChange({ ...filters, bankIds: [] })
   }
   
-  // Change location type
   const setType = (type) => {
     onFilterChange({ ...filters, type })
   }
   
-  // Change city
   const setCity = (cityId) => {
     onFilterChange({ ...filters, cityId: cityId || null })
   }
   
-  // Toggle service
   const toggleService = (serviceKey) => {
     onFilterChange({ 
       ...filters, 
@@ -94,7 +89,6 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
     })
   }
   
-  // Clear all filters
   const clearAll = () => {
     onFilterChange({
       type: 'both',
@@ -117,14 +111,14 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
     filters.driveThru ||
     filters.foreignExchange
   
-  // Count active services
   const activeServicesCount = serviceOptions.filter(s => filters[s.key]).length
   
   return (
     <div className="bg-white border-b shadow-sm sticky top-16 z-30">
-      {/* Row 1: Bank Pills */}
-      <div className="px-4 py-3 border-b overflow-x-auto">
-        <div className="flex items-center gap-2 flex-nowrap min-w-max">
+      
+      {/* Row 1: Bank Pills - Wrapping */}
+      <div className="px-4 py-3 border-b">
+        <div className="flex items-center gap-2 flex-wrap">
           {banks.map(bank => {
             const isSelected = filters.bankIds.includes(bank.id)
             const color = BANK_COLORS[bank.code] || '#6B7280'
@@ -133,7 +127,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
               <button
                 key={bank.id}
                 onClick={() => toggleBank(bank.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
                 style={{
                   backgroundColor: isSelected ? color : '#FFFFFF',
                   color: isSelected ? '#FFFFFF' : color,
@@ -156,7 +150,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
           {filters.bankIds.length > 0 && (
             <button
               onClick={clearBanks}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded-full transition-colors whitespace-nowrap"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded-full transition-colors"
             >
               <X size={12} />
               <span>{text.clearAll}</span>
@@ -165,26 +159,24 @@ function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe 
         </div>
       </div>
       
-      {/* Row 2: Type + City + Near Me */}
+      {/* Row 2: Type + City + Near Me + Clear All */}
       <div className="px-4 py-2 flex items-center gap-3 flex-wrap border-b">
         
         {/* Type: Branch / ATM / Both */}
-        <div className="flex items-center">
-          <div className="flex rounded-lg overflow-hidden border">
-            {['branch', 'atm', 'both'].map(type => (
-              <button
-                key={type}
-                onClick={() => setType(type)}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  filters.type === type
-                    ? 'bg-saudi-green-500 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {text[type]}
-              </button>
-            ))}
-          </div>
+        <div className="flex rounded-lg overflow-hidden border">
+          {['branch', 'atm', 'both'].map(type => (
+            <button
+              key={type}
+              onClick={() => setType(type)}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                filters.type === type
+                  ? 'bg-saudi-green-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {text[type]}
+            </button>
+          ))}
         </div>
         
         {/* City Dropdown */}

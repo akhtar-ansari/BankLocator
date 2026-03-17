@@ -179,7 +179,7 @@ function NewsletterPage({ language }) {
                           {notice.description}
                         </p>
                         {notice.link && (
-                          
+                         <a 
                             href={notice.link}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -221,7 +221,7 @@ function NewsletterPage({ language }) {
                       : 'For more information, visit the official Saudi Central Bank website'
                     }
                   </p>
-                  
+                  <a
                     href="https://sama.gov.sa"
                     target="_blank"
                     rel="noopener noreferrer"

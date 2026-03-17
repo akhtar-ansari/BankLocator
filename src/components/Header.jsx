@@ -1,11 +1,13 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, MapPin, CreditCard, Landmark, ArrowLeftRight, Info } from 'lucide-react'
+import { Newspaper } from 'lucide-react'  // ADD THIS TO IMPORTS AT TOP (line 3)
 
 function Header({ language, toggleLanguage, openComingSoon }) {
   const t = {
     ar: {
       locator: 'محدد الفروع',
+      newsletter: 'النشرة',
       loans: 'القروض',
       creditCards: 'البطاقات',
       comparisons: 'المقارنات',
@@ -14,6 +16,7 @@ function Header({ language, toggleLanguage, openComingSoon }) {
     },
     en: {
       locator: 'Locator',
+      newsletter: 'Newsletter',
       loans: 'Loans',
       creditCards: 'Cards',
       comparisons: 'Compare',
@@ -26,6 +29,7 @@ function Header({ language, toggleLanguage, openComingSoon }) {
   
   const navItems = [
     { key: 'locator', icon: MapPin, path: '/', active: true },
+    { key: 'newsletter', icon: Newspaper, path: '/newsletter' },
     { key: 'loans', icon: Landmark, comingSoon: true },
     { key: 'creditCards', icon: CreditCard, comingSoon: true },
     { key: 'comparisons', icon: ArrowLeftRight, comingSoon: true },
@@ -40,7 +44,7 @@ function Header({ language, toggleLanguage, openComingSoon }) {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
             <video 
-              className="logo-video w-10 h-10"
+              className="logo-video h-[60px] w-auto"
               autoPlay 
               loop 
               muted 

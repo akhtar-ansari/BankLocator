@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Globe, MapPin, CreditCard, Landmark, ArrowLeftRight, Info } from 'lucide-react'
-import { Newspaper } from 'lucide-react'  // ADD THIS TO IMPORTS AT TOP (line 3)
+import { Globe, MapPin, CreditCard, Landmark, ArrowLeftRight, Info, Newspaper } from 'lucide-react'
 
 function Header({ language, toggleLanguage, openComingSoon }) {
   const t = {

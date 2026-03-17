@@ -4,6 +4,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
+import NewsletterPage from './pages/NewsletterPage'
 import ComingSoonModal from './components/ComingSoonModal'
 
 function App() {
@@ -49,6 +50,10 @@ function App() {
             <Route 
               path="/about" 
               element={<AboutPage language={language} />} 
+            />
+            <Route 
+              path="/newsletter" 
+              element={<NewsletterPage language={language} />} 
             />
           </Routes>
         </main>

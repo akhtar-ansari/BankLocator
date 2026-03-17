@@ -1,5 +1,5 @@
 import React from 'react'
-import { X } from 'lucide-react'
+import { X, Navigation } from 'lucide-react'
 
 // Unique colors for each bank (visually distinct)
 const BANK_COLORS = {
@@ -15,7 +15,7 @@ const BANK_COLORS = {
   emiratesnbd: '#65A30D'
 }
 
-function FilterBar({ language, banks, cities, filters, onFilterChange }) {
+function FilterBar({ language, banks, cities, filters, onFilterChange, onNearMe }) {
   const t = {
     ar: {
       allBanks: 'جميع البنوك',
@@ -27,7 +27,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
       city: 'المدينة',
       allCities: 'جميع المدن',
       services: 'الخدمات',
-      allServices: 'جميع الخدمات',
+      nearMe: 'قريب مني',
       is24Hours: '24 ساعة',
       wheelchair: 'كرسي متحرك',
       womenSection: 'قسم نسائي',
@@ -44,7 +44,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
       city: 'City',
       allCities: 'All Cities',
       services: 'Services',
-      allServices: 'All Services',
+      nearMe: 'Near Me',
       is24Hours: '24 Hours',
       wheelchair: 'Wheelchair',
       womenSection: 'Women Section',
@@ -94,19 +94,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
     })
   }
   
-  // Clear all services
-  const clearServices = () => {
-    onFilterChange({ 
-      ...filters, 
-      is24Hours: false,
-      wheelchair: false,
-      womenSection: false,
-      driveThru: false,
-      foreignExchange: false
-    })
-  }
-  
-  // Clear everything
+  // Clear all filters
   const clearAll = () => {
     onFilterChange({
       type: 'both',
@@ -129,11 +117,14 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
     filters.driveThru ||
     filters.foreignExchange
   
+  // Count active services
+  const activeServicesCount = serviceOptions.filter(s => filters[s.key]).length
+  
   return (
-    <div className="bg-white border-b shadow-sm">
+    <div className="bg-white border-b shadow-sm sticky top-16 z-30">
       {/* Row 1: Bank Pills */}
-      <div className="px-4 py-3 border-b">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="px-4 py-3 border-b overflow-x-auto">
+        <div className="flex items-center gap-2 flex-nowrap min-w-max">
           {banks.map(bank => {
             const isSelected = filters.bankIds.includes(bank.id)
             const color = BANK_COLORS[bank.code] || '#6B7280'
@@ -142,11 +133,11 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
               <button
                 key={bank.id}
                 onClick={() => toggleBank(bank.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap"
                 style={{
-                  backgroundColor: isSelected ? color : '#F3F4F6',
-                  color: isSelected ? '#FFFFFF' : '#374151',
-                  border: `2px solid ${isSelected ? color : '#E5E7EB'}`
+                  backgroundColor: isSelected ? color : '#FFFFFF',
+                  color: isSelected ? '#FFFFFF' : color,
+                  border: `2px solid ${color}`
                 }}
               >
                 {bank.logo_url && (
@@ -165,7 +156,7 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
           {filters.bankIds.length > 0 && (
             <button
               onClick={clearBanks}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded-full transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded-full transition-colors whitespace-nowrap"
             >
               <X size={12} />
               <span>{text.clearAll}</span>
@@ -174,12 +165,11 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
         </div>
       </div>
       
-      {/* Row 2: Type + City + Services */}
-      <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
+      {/* Row 2: Type + City + Near Me */}
+      <div className="px-4 py-2 flex items-center gap-3 flex-wrap border-b">
         
         {/* Type: Branch / ATM / Both */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">{text.type}:</span>
+        <div className="flex items-center">
           <div className="flex rounded-lg overflow-hidden border">
             {['branch', 'atm', 'both'].map(type => (
               <button
@@ -198,59 +188,27 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
         </div>
         
         {/* City Dropdown */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">{text.city}:</span>
-          <select
-            value={filters.cityId || ''}
-            onChange={(e) => setCity(e.target.value)}
-            className="px-3 py-1.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-saudi-green-500"
-          >
-            <option value="">{text.allCities}</option>
-            {cities.map(city => (
-              <option key={city.id} value={city.id}>
-                {language === 'ar' ? city.name_ar : city.name_en}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={filters.cityId || ''}
+          onChange={(e) => setCity(e.target.value)}
+          className="px-3 py-1.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-saudi-green-500"
+        >
+          <option value="">{text.allCities}</option>
+          {cities.map(city => (
+            <option key={city.id} value={city.id}>
+              {language === 'ar' ? city.name_ar : city.name_en}
+            </option>
+          ))}
+        </select>
         
-        {/* Services Dropdown */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">{text.services}:</span>
-          <div className="relative group">
-            <button className="px-3 py-1.5 text-sm border rounded-lg bg-white hover:bg-gray-50 flex items-center gap-2">
-              <span>{text.allServices}</span>
-              <span className="text-xs text-gray-400">▼</span>
-            </button>
-            
-            {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[180px]">
-              {serviceOptions.map(service => (
-                <label
-                  key={service.key}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters[service.key] || false}
-                    onChange={() => toggleService(service.key)}
-                    className="w-4 h-4 text-saudi-green-500 rounded focus:ring-saudi-green-500"
-                  />
-                  <span className="text-sm">{service.label}</span>
-                </label>
-              ))}
-              
-              <div className="border-t px-3 py-2">
-                <button
-                  onClick={clearServices}
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  {text.clearAll}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Near Me Button */}
+        <button
+          onClick={onNearMe}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          <Navigation size={14} />
+          <span>{text.nearMe}</span>
+        </button>
         
         {/* Clear All Button */}
         {hasActiveFilters && (
@@ -261,6 +219,34 @@ function FilterBar({ language, banks, cities, filters, onFilterChange }) {
             <X size={14} />
             <span>{text.clearAll}</span>
           </button>
+        )}
+      </div>
+      
+      {/* Row 3: Services Chips */}
+      <div className="px-4 py-2 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-gray-500 font-medium">{text.services}:</span>
+        
+        {serviceOptions.map(service => {
+          const isActive = filters[service.key]
+          return (
+            <button
+              key={service.key}
+              onClick={() => toggleService(service.key)}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                isActive
+                  ? 'bg-saudi-green-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
+              }`}
+            >
+              {service.label}
+            </button>
+          )
+        })}
+        
+        {activeServicesCount > 0 && (
+          <span className="text-xs text-gray-400 ml-2">
+            ({activeServicesCount})
+          </span>
         )}
       </div>
     </div>

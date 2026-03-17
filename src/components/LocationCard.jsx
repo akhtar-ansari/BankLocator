@@ -273,26 +273,3 @@ function LocationCard({ location, language, onClose }) {
 }
 
 export default LocationCard
-```
-
----
-
-## What This Includes
-
-| Feature | Description |
-|---------|-------------|
-| **Directions** | Opens Google Maps with lat/lng coordinates |
-| **Call** | Opens phone dialer |
-| **WhatsApp Share** | Shares message with Google Maps link (when user clicks link in WhatsApp → opens Google Maps) |
-| **Report Issue** | Text input form with submit button |
-| **Services badges** | Shows 24hr, wheelchair, women, drive-thru, forex |
-
----
-
-## WhatsApp Message Format
-
-When user taps WhatsApp share, it opens WhatsApp with this message:
-```
-Check out this location: Al Rajhi - King Fahd Branch
-📍 King Fahd Road, Riyadh
-🗺️ https://maps.google.com/?q=24.7136,46.6753

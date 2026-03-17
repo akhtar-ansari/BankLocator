@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap, ZoomControl } from 'react-leaflet'
 import { Maximize2, Minimize2, Map, Satellite, Navigation } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -55,18 +55,15 @@ const createBlueDotIcon = () => {
 function MapController({ mapRef }) {
   const map = useMap()
   
-  // Store map reference
   useEffect(() => {
     if (mapRef) {
       mapRef.current = map
     }
   }, [map, mapRef])
   
-  // Disable scroll wheel zoom (page scrolls instead)
   useEffect(() => {
     map.scrollWheelZoom.disable()
     
-    // Enable scroll zoom only with Ctrl key
     const handleWheel = (e) => {
       if (e.ctrlKey) {
         map.scrollWheelZoom.enable()
@@ -166,14 +163,14 @@ const MapView = forwardRef(function MapView({
   banks, 
   selectedLocation, 
   setSelectedLocation,
-  userLocation 
+  userLocation,
+  children
 }, ref) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [mapType, setMapType] = useState('street')
   const mapInstanceRef = useRef(null)
   const containerRef = useRef(null)
   
-  // Expose map methods to parent via ref
   useImperativeHandle(ref, () => ({
     flyTo: (coords, zoom, options) => {
       if (mapInstanceRef.current) {
@@ -184,26 +181,24 @@ const MapView = forwardRef(function MapView({
       if (mapInstanceRef.current) {
         mapInstanceRef.current.setView(coords, zoom)
       }
-    }
+    },
+    isFullscreen: () => isFullscreen,
+    getContainer: () => containerRef.current
   }))
   
-  // Default center: Riyadh
   const defaultCenter = [24.7136, 46.6753]
   const defaultZoom = 11
   
-  // Tile layers
   const tileLayers = {
     street: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
   }
   
-  // Get bank code from bank_id
   const getBankCode = (bankId) => {
     const bank = banks.find(b => b.id === bankId)
     return bank?.code || 'default'
   }
   
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen()
@@ -214,7 +209,6 @@ const MapView = forwardRef(function MapView({
     }
   }
   
-  // Listen for fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
@@ -223,7 +217,6 @@ const MapView = forwardRef(function MapView({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
   
-  // Fly to selected location
   useEffect(() => {
     if (selectedLocation && mapInstanceRef.current) {
       mapInstanceRef.current.flyTo(
@@ -237,10 +230,9 @@ const MapView = forwardRef(function MapView({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
+      className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}
       style={{ touchAction: 'pan-y' }}
     >
-      {/* CSS for blue dot pulse animation */}
       <style>{`
         .blue-dot-icon {
           background: transparent !important;
@@ -273,13 +265,9 @@ const MapView = forwardRef(function MapView({
         touchZoom={true}
         doubleClickZoom={true}
       >
-        {/* Map Controller */}
         <MapController mapRef={mapInstanceRef} />
-        
-        {/* Zoom Control - Top Left */}
         <ZoomControl position="topleft" />
         
-        {/* Tile Layer */}
         <TileLayer
           key={mapType}
           url={tileLayers[mapType]}
@@ -289,19 +277,13 @@ const MapView = forwardRef(function MapView({
           }
         />
         
-        {/* User Location Blue Dot */}
         {userLocation && (
           <Marker 
             position={userLocation} 
             icon={createBlueDotIcon()}
-          >
-            <Popup>
-              {language === 'ar' ? 'موقعك الحالي' : 'Your Location'}
-            </Popup>
-          </Marker>
+          />
         )}
         
-        {/* Location Markers */}
         {locations.map(location => {
           if (!location.latitude || !location.longitude) return null
           
@@ -316,35 +298,28 @@ const MapView = forwardRef(function MapView({
               eventHandlers={{
                 click: () => setSelectedLocation(location)
               }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-bold">{language === 'ar' ? location.name_ar : location.name_en}</p>
-                  <p className="text-gray-600">{language === 'ar' ? location.address_ar : location.address_en}</p>
-                </div>
-              </Popup>
-            </Marker>
+            />
           )
         })}
         
-        {/* Fullscreen Control */}
         <FullscreenControl 
           isFullscreen={isFullscreen} 
           toggleFullscreen={toggleFullscreen} 
         />
         
-        {/* Map Type Control */}
         <MapTypeControl 
           mapType={mapType} 
           setMapType={setMapType} 
         />
         
-        {/* My Location Control */}
         <MyLocationControl 
           userLocation={userLocation} 
           mapInstanceRef={mapInstanceRef}
         />
       </MapContainer>
+      
+      {/* Children (LocationCard) rendered inside map container for fullscreen support */}
+      {children}
     </div>
   )
 })

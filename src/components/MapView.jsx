@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet'
 import { Maximize2, Minimize2, Map, Satellite, Navigation } from 'lucide-react'
 import L from 'leaflet'
@@ -51,25 +51,16 @@ const createBlueDotIcon = () => {
   })
 }
 
-// Component to handle map settings and user location
-function MapController({ userLocation, setUserLocation }) {
+// Component to handle map settings
+function MapController({ mapRef }) {
   const map = useMap()
   
-  // Get user location
+  // Store map reference
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords
-          setUserLocation([latitude, longitude])
-        },
-        (error) => {
-          console.log('Geolocation error:', error.message)
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      )
+    if (mapRef) {
+      mapRef.current = map
     }
-  }, [setUserLocation])
+  }, [map, mapRef])
   
   // Disable scroll wheel zoom (page scrolls instead)
   useEffect(() => {
@@ -145,10 +136,10 @@ function MapTypeControl({ mapType, setMapType }) {
 }
 
 // My Location button component
-function MyLocationControl({ userLocation, map }) {
+function MyLocationControl({ userLocation, mapInstanceRef }) {
   const goToMyLocation = () => {
-    if (userLocation && map) {
-      map.flyTo(userLocation, 15, { duration: 1 })
+    if (userLocation && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(userLocation, 15, { duration: 1 })
     }
   }
   
@@ -169,12 +160,32 @@ function MyLocationControl({ userLocation, map }) {
   )
 }
 
-function MapView({ language, locations, banks, selectedLocation, setSelectedLocation }) {
+const MapView = forwardRef(function MapView({ 
+  language, 
+  locations, 
+  banks, 
+  selectedLocation, 
+  setSelectedLocation,
+  userLocation 
+}, ref) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [mapType, setMapType] = useState('street')
-  const [userLocation, setUserLocation] = useState(null)
-  const mapRef = useRef(null)
+  const mapInstanceRef = useRef(null)
   const containerRef = useRef(null)
+  
+  // Expose map methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    flyTo: (coords, zoom, options) => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.flyTo(coords, zoom, options)
+      }
+    },
+    setView: (coords, zoom) => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setView(coords, zoom)
+      }
+    }
+  }))
   
   // Default center: Riyadh
   const defaultCenter = [24.7136, 46.6753]
@@ -211,6 +222,17 @@ function MapView({ language, locations, banks, selectedLocation, setSelectedLoca
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
+  
+  // Fly to selected location
+  useEffect(() => {
+    if (selectedLocation && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(
+        [selectedLocation.latitude, selectedLocation.longitude],
+        15,
+        { duration: 1 }
+      )
+    }
+  }, [selectedLocation])
   
   return (
     <div 
@@ -250,13 +272,9 @@ function MapView({ language, locations, banks, selectedLocation, setSelectedLoca
         dragging={true}
         touchZoom={true}
         doubleClickZoom={true}
-        ref={mapRef}
       >
         {/* Map Controller */}
-        <MapController 
-          userLocation={userLocation} 
-          setUserLocation={setUserLocation} 
-        />
+        <MapController mapRef={mapInstanceRef} />
         
         {/* Zoom Control - Top Left */}
         <ZoomControl position="topleft" />
@@ -324,11 +342,11 @@ function MapView({ language, locations, banks, selectedLocation, setSelectedLoca
         {/* My Location Control */}
         <MyLocationControl 
           userLocation={userLocation} 
-          map={mapRef.current} 
+          mapInstanceRef={mapInstanceRef}
         />
       </MapContainer>
     </div>
   )
-}
+})
 
 export default MapView

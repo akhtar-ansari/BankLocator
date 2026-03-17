@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ann-001",
+    "image": "story-1.jpg",
+    "headline_ar": "مصرف الراجحي يمدد ساعات العمل في رمضان",
+    "headline_en": "Al Rajhi extends Ramadan working hours",
+    "source": "Al Rajhi Bank",
+    "date": "2026-03-15",
+    "link": "https://www.alrajhibank.com.sa"
+  },
+  {
+    "id": "ann-002",
+    "image": "story-2.jpg",
+    "headline_ar": "البنك الأهلي يفتتح فرعاً جديداً في الرياض",
+    "headline_en": "SNB opens new branch in Riyadh",
+    "source": "Saudi National Bank",
+    "date": "2026-03-14",
+    "link": "https://www.alahli.com"
+  },
+  {
+    "id": "ann-003",
+    "image": "story-3.jpg",
+    "headline_ar": "بنك الرياض يطلق خدمة جديدة للتحويلات",
+    "headline_en": "Riyad Bank launches new transfer service",
+    "source": "Riyad Bank",
+    "date": "2026-03-13",
+    "link": "https://www.riyadbank.com"
+  }
+]

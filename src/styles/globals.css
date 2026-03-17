@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* RTL Support */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #006B3F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #005a35;
+}
+
+/* Leaflet Map Customizations */
+.leaflet-container {
+  font-family: 'Tajawal', 'Poppins', sans-serif;
+  z-index: 1;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Custom Map Marker */
+.bank-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+}
+
+/* ATM Marker */
+.atm-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: #0066B3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Cluster Marker */
+.marker-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: bold;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.marker-cluster-small {
+  background: #006B3F;
+  width: 40px;
+  height: 40px;
+}
+
+.marker-cluster-medium {
+  background: #C9A227;
+  width: 50px;
+  height: 50px;
+}
+
+.marker-cluster-large {
+  background: #E4002B;
+  width: 60px;
+  height: 60px;
+}
+
+/* Stories Carousel */
+.stories-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.stories-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Story Card Hover Effect */
+.story-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.story-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Filter Sidebar */
+.filter-sidebar {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Mobile Bottom Sheet */
+@media (max-width: 768px) {
+  .bottom-sheet {
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .bottom-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+    margin: 8px auto;
+  }
+}
+
+/* Coming Soon Badge */
+.coming-soon-badge {
+  background: linear-gradient(135deg, #C9A227 0%, #E6B82A 100%);
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply bg-saudi-green-500 text-white px-4 py-2 rounded-lg font-medium
+         hover:bg-saudi-green-600 transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-saudi-green-300;
+}
+
+.btn-secondary {
+  @apply bg-gold-500 text-dark px-4 py-2 rounded-lg font-medium
+         hover:bg-gold-600 transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-gold-300;
+}
+
+.btn-outline {
+  @apply border-2 border-saudi-green-500 text-saudi-green-500 px-4 py-2 rounded-lg font-medium
+         hover:bg-saudi-green-500 hover:text-white transition-all duration-200;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white rounded-xl shadow-md p-4 transition-shadow duration-200;
+}
+
+.card:hover {
+  @apply shadow-lg;
+}
+
+/* Language Toggle */
+.lang-toggle {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-saudi-green-500
+         text-sm font-medium cursor-pointer transition-all duration-200;
+}
+
+.lang-toggle.active {
+  @apply bg-saudi-green-500 text-white;
+}
+
+.lang-toggle:not(.active) {
+  @apply text-saudi-green-500 hover:bg-saudi-green-50;
+}
+
+/* Animated Logo Container */
+.logo-video {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* Gradient Backgrounds */
+.gradient-saudi {
+  background: linear-gradient(135deg, #006B3F 0%, #004D3D 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, #C9A227 0%, #E6B82A 100%);
+}
+
+/* Open/Closed Status */
+.status-open {
+  @apply text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-closed {
+  @apply text-red-600 bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* Pulse Animation for Near Me Button */
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(201, 162, 39, 0);
+  }
+}
+
+.pulse-gold {
+  animation: pulse-gold 2s infinite;
+}

@@ -1,237 +1,332 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet'
+import { Maximize2, Minimize2, Map, Satellite, Navigation } from 'lucide-react'
 import L from 'leaflet'
-import { Navigation, Phone, Clock, ExternalLink, AlertTriangle } from 'lucide-react'
+import 'leaflet/dist/leaflet.css'
 
-// Fix for default marker icons in React-Leaflet
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
-})
+// Unique colors for each bank (must match FilterBar.jsx)
+const BANK_COLORS = {
+  alrajhi: '#004D3D',
+  snb: '#1E3A8A',
+  riyad: '#7C3AED',
+  albilad: '#059669',
+  alinma: '#0891B2',
+  bsf: '#DC2626',
+  anb: '#D97706',
+  aljazira: '#4F46E5',
+  saib: '#DB2777',
+  emiratesnbd: '#65A30D'
+}
 
-// Create custom bank marker icon
-const createBankIcon = (color = '#006B3F', type = 'branch') => {
-  const size = type === 'atm' ? 24 : 32
+// Create colored pin icon
+const createPinIcon = (color) => {
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}">
-      <circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/>
-      ${type === 'atm' 
-        ? '<text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">ATM</text>'
-        : '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" fill="none"/>'
-      }
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+      <path fill="${color}" stroke="#FFFFFF" stroke-width="1.5" d="M12 0C5.4 0 0 5.4 0 12c0 7.2 12 24 12 24s12-16.8 12-24c0-6.6-5.4-12-12-12z"/>
+      <circle fill="#FFFFFF" cx="12" cy="12" r="5"/>
     </svg>
   `
   return L.divIcon({
     html: svg,
-    className: 'custom-marker',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2]
+    className: 'custom-pin-icon',
+    iconSize: [24, 36],
+    iconAnchor: [12, 36],
+    popupAnchor: [0, -36]
   })
 }
 
-// Component to handle map center updates
-function MapController({ center, zoom }) {
-  const map = useMap()
-  useEffect(() => {
-    if (center) {
-      map.setView(center, zoom || 12)
-    }
-  }, [center, zoom, map])
-  return null
+// Blue dot icon for current location
+const createBlueDotIcon = () => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+      <circle cx="12" cy="12" r="10" fill="#4285F4" fill-opacity="0.2"/>
+      <circle cx="12" cy="12" r="6" fill="#4285F4" stroke="#FFFFFF" stroke-width="2"/>
+    </svg>
+  `
+  return L.divIcon({
+    html: `<div class="blue-dot-pulse">${svg}</div>`,
+    className: 'blue-dot-icon',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  })
 }
 
-// Near Me Button Handler
-function NearMeButton({ language, onLocate }) {
-  const [loading, setLoading] = useState(false)
+// Component to handle map settings and user location
+function MapController({ userLocation, setUserLocation }) {
+  const map = useMap()
   
-  const handleClick = () => {
-    setLoading(true)
+  // Get user location
+  useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          onLocate([position.coords.latitude, position.coords.longitude])
-          setLoading(false)
+          const { latitude, longitude } = position.coords
+          setUserLocation([latitude, longitude])
         },
         (error) => {
-          console.error('Geolocation error:', error)
-          setLoading(false)
-          alert(language === 'ar' 
-            ? 'تعذر تحديد موقعك. يرجى السماح بالوصول للموقع.'
-            : 'Could not get your location. Please allow location access.'
-          )
-        }
+          console.log('Geolocation error:', error.message)
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
       )
     }
-  }
+  }, [setUserLocation])
   
+  // Disable scroll wheel zoom (page scrolls instead)
+  useEffect(() => {
+    map.scrollWheelZoom.disable()
+    
+    // Enable scroll zoom only with Ctrl key
+    const handleWheel = (e) => {
+      if (e.ctrlKey) {
+        map.scrollWheelZoom.enable()
+      } else {
+        map.scrollWheelZoom.disable()
+      }
+    }
+    
+    map.getContainer().addEventListener('wheel', handleWheel)
+    return () => {
+      map.getContainer().removeEventListener('wheel', handleWheel)
+    }
+  }, [map])
+  
+  return null
+}
+
+// Fullscreen control component
+function FullscreenControl({ isFullscreen, toggleFullscreen }) {
   return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      className="absolute top-4 right-4 z-[1000] flex items-center gap-2 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-dark font-medium rounded-full shadow-lg transition-colors pulse-gold"
-    >
-      <Navigation size={18} className={loading ? 'animate-spin' : ''} />
-      <span>{language === 'ar' ? 'موقعي' : 'Near Me'}</span>
-    </button>
+    <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
+      <div className="leaflet-control">
+        <button
+          onClick={toggleFullscreen}
+          className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-100 transition-colors"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+        </button>
+      </div>
+    </div>
   )
 }
 
-function MapView({ language, locations = [], selectedLocation, setSelectedLocation }) {
-  const [center, setCenter] = useState([24.7136, 46.6753]) // Riyadh default
-  const [zoom, setZoom] = useState(11)
-  
-  const handleNearMe = (coords) => {
-    setCenter(coords)
-    setZoom(14)
-  }
-  
-  const t = {
-    ar: {
-      open: 'مفتوح',
-      closed: 'مغلق',
-      hours: 'ساعات العمل',
-      directions: 'الاتجاهات',
-      call: 'اتصل',
-      openAccount: 'افتح حساب',
-      reportUpdate: 'أبلغ عن تحديث',
-      noLocations: 'لا توجد مواقع',
-      noLocationsDesc: 'جرب تغيير الفلاتر أو اختيار مدينة أخرى'
-    },
-    en: {
-      open: 'Open',
-      closed: 'Closed',
-      hours: 'Hours',
-      directions: 'Directions',
-      call: 'Call',
-      openAccount: 'Open Account',
-      reportUpdate: 'Report Update',
-      noLocations: 'No locations found',
-      noLocationsDesc: 'Try changing filters or selecting a different city'
+// Map type toggle component
+function MapTypeControl({ mapType, setMapType }) {
+  return (
+    <div className="leaflet-bottom leaflet-left" style={{ marginBottom: '25px', marginLeft: '10px' }}>
+      <div className="leaflet-control">
+        <div className="flex bg-white rounded-lg shadow-md overflow-hidden">
+          <button
+            onClick={() => setMapType('street')}
+            className={`flex items-center gap-1 px-3 py-2 text-sm transition-colors ${
+              mapType === 'street' 
+                ? 'bg-saudi-green-500 text-white' 
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Map size={16} />
+            <span>Map</span>
+          </button>
+          <button
+            onClick={() => setMapType('satellite')}
+            className={`flex items-center gap-1 px-3 py-2 text-sm transition-colors ${
+              mapType === 'satellite' 
+                ? 'bg-saudi-green-500 text-white' 
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Satellite size={16} />
+            <span>Satellite</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// My Location button component
+function MyLocationControl({ userLocation, map }) {
+  const goToMyLocation = () => {
+    if (userLocation && map) {
+      map.flyTo(userLocation, 15, { duration: 1 })
     }
   }
   
-  const text = t[language]
-  
-  // Check if branch is currently open
-  const isOpen = (location) => {
-    if (location.is_24_hours) return true
-    
-    const now = new Date()
-    const day = now.getDay() // 0 = Sunday
-    
-    // Saudi working days: Sunday (0) to Thursday (4)
-    if (day === 5 || day === 6) return false // Friday, Saturday closed
-    
-    const currentTime = now.getHours() * 100 + now.getMinutes()
-    const openTime = 930 // 9:30 AM
-    const closeTime = 1630 // 4:30 PM
-    
-    return currentTime >= openTime && currentTime <= closeTime
-  }
+  if (!userLocation) return null
   
   return (
-    <div className="relative flex-1 h-[calc(100vh-200px)] md:h-[calc(100vh-180px)] rounded-xl overflow-hidden shadow-lg">
+    <div className="leaflet-bottom leaflet-right" style={{ marginBottom: '25px', marginRight: '10px' }}>
+      <div className="leaflet-control">
+        <button
+          onClick={goToMyLocation}
+          className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-100 transition-colors"
+          title="My Location"
+        >
+          <Navigation size={20} className="text-blue-500" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MapView({ language, locations, banks, selectedLocation, setSelectedLocation }) {
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [mapType, setMapType] = useState('street')
+  const [userLocation, setUserLocation] = useState(null)
+  const mapRef = useRef(null)
+  const containerRef = useRef(null)
+  
+  // Default center: Riyadh
+  const defaultCenter = [24.7136, 46.6753]
+  const defaultZoom = 11
+  
+  // Tile layers
+  const tileLayers = {
+    street: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+  }
+  
+  // Get bank code from bank_id
+  const getBankCode = (bankId) => {
+    const bank = banks.find(b => b.id === bankId)
+    return bank?.code || 'default'
+  }
+  
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen()
+      setIsFullscreen(false)
+    }
+  }
+  
+  // Listen for fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+  
+  return (
+    <div 
+      ref={containerRef}
+      className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
+      style={{ touchAction: 'pan-y' }}
+    >
+      {/* CSS for blue dot pulse animation */}
+      <style>{`
+        .blue-dot-icon {
+          background: transparent !important;
+          border: none !important;
+        }
+        .blue-dot-pulse {
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.2); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .custom-pin-icon {
+          background: transparent !important;
+          border: none !important;
+        }
+        .leaflet-container {
+          font-family: 'Tajawal', 'Poppins', sans-serif;
+        }
+      `}</style>
+      
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={defaultCenter}
+        zoom={defaultZoom}
         className="w-full h-full"
         zoomControl={false}
+        scrollWheelZoom={false}
+        dragging={true}
+        touchZoom={true}
+        doubleClickZoom={true}
+        ref={mapRef}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        {/* Map Controller */}
+        <MapController 
+          userLocation={userLocation} 
+          setUserLocation={setUserLocation} 
         />
         
-        <MapController center={center} zoom={zoom} />
+        {/* Zoom Control - Top Left */}
+        <ZoomControl position="topleft" />
         
-        {locations.map(location => (
-          location.latitude && location.longitude && (
+        {/* Tile Layer */}
+        <TileLayer
+          key={mapType}
+          url={tileLayers[mapType]}
+          attribution={mapType === 'street' 
+            ? '&copy; OpenStreetMap contributors' 
+            : '&copy; Esri'
+          }
+        />
+        
+        {/* User Location Blue Dot */}
+        {userLocation && (
+          <Marker 
+            position={userLocation} 
+            icon={createBlueDotIcon()}
+          >
+            <Popup>
+              {language === 'ar' ? 'موقعك الحالي' : 'Your Location'}
+            </Popup>
+          </Marker>
+        )}
+        
+        {/* Location Markers */}
+        {locations.map(location => {
+          if (!location.latitude || !location.longitude) return null
+          
+          const bankCode = getBankCode(location.bank_id)
+          const color = BANK_COLORS[bankCode] || '#6B7280'
+          
+          return (
             <Marker
               key={location.id}
-              position={[parseFloat(location.latitude), parseFloat(location.longitude)]}
-              icon={createBankIcon(
-                location.banks?.brand_color || '#006B3F',
-                location.type
-              )}
+              position={[location.latitude, location.longitude]}
+              icon={createPinIcon(color)}
               eventHandlers={{
                 click: () => setSelectedLocation(location)
               }}
             >
               <Popup>
-                <div className="min-w-[200px]">
-                  {/* Bank Name */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: location.banks?.brand_color || '#006B3F' }}
-                    />
-                    <span className="font-bold text-sm">
-                      {language === 'ar' ? location.banks?.name_ar : location.banks?.name_en}
-                    </span>
-                  </div>
-                  
-                  {/* Branch Name */}
-                  <p className="text-sm text-gray-700 mb-2">
-                    {language === 'ar' ? location.name_ar : location.name_en}
-                  </p>
-                  
-                  {/* Status */}
-                  <div className="flex items-center gap-2 mb-2">
-                    {location.is_24_hours ? (
-                      <span className="status-open">24/7</span>
-                    ) : isOpen(location) ? (
-                      <span className="status-open">{text.open}</span>
-                    ) : (
-                      <span className="status-closed">{text.closed}</span>
-                    )}
-                  </div>
-                  
-                  {/* Quick Actions */}
-                  <div className="flex gap-2 mt-3">
-                    {location.google_maps_url && (
-                      <a
-                        href={location.google_maps_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-saudi-green-500 hover:underline"
-                      >
-                        <Navigation size={12} />
-                        {text.directions}
-                      </a>
-                    )}
-                    {location.phone && (
-                      <a
-                        href={`tel:${location.phone}`}
-                        className="flex items-center gap-1 text-xs text-saudi-green-500 hover:underline"
-                      >
-                        <Phone size={12} />
-                        {text.call}
-                      </a>
-                    )}
-                  </div>
+                <div className="text-sm">
+                  <p className="font-bold">{language === 'ar' ? location.name_ar : location.name_en}</p>
+                  <p className="text-gray-600">{language === 'ar' ? location.address_ar : location.address_en}</p>
                 </div>
               </Popup>
             </Marker>
           )
-        ))}
+        })}
+        
+        {/* Fullscreen Control */}
+        <FullscreenControl 
+          isFullscreen={isFullscreen} 
+          toggleFullscreen={toggleFullscreen} 
+        />
+        
+        {/* Map Type Control */}
+        <MapTypeControl 
+          mapType={mapType} 
+          setMapType={setMapType} 
+        />
+        
+        {/* My Location Control */}
+        <MyLocationControl 
+          userLocation={userLocation} 
+          map={mapRef.current} 
+        />
       </MapContainer>
-      
-      {/* Near Me Button */}
-      <NearMeButton language={language} onLocate={handleNearMe} />
-      
-      {/* No Locations Message */}
-      {locations.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-[500]">
-          <div className="text-center p-6">
-            <AlertTriangle size={48} className="text-gold-500 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-dark mb-2">{text.noLocations}</h3>
-            <p className="text-gray-600 text-sm">{text.noLocationsDesc}</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
